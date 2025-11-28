@@ -1,0 +1,78 @@
+services:
+
+  # Nginx Service
+  nginx:
+    container_name: nginx
+    build:
+      context: './.docker/nginx'
+      args:
+        PUID: ${PUID}
+        PGID: ${PGID}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./web:/var/www
+      - ./.docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./.docker/nginx/certs:/etc/nginx/certs
+      - ./.docker/nginx/logs:/var/log/nginx
+    depends_on:
+      - php
+    networks:
+      - development
+
+  # PHP Service
+  php:
+    container_name: php
+    build:
+      context: './.docker/php'
+      args:
+        PUID: ${PUID}
+        PGID: ${PGID}
+    restart: unless-stopped
+    volumes:
+      - ./web:/var/www
+      - ./.docker/php/logs:/var/log
+      - ./.docker/php/php.ini:/usr/local/etc/php/php.ini
+    depends_on:
+      - mariadb
+    networks:
+      - development
+
+  # MariaDB Service
+  mariadb:
+    image: mariadb:lts
+    container_name: mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_HOST: "%"
+    volumes:
+      - ./.docker/mariadb/my.conf:/etc/mariadb/my.conf
+      - database:/var/lib/mysql
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD
+      interval: 5s
+      retries: 10
+    ports:
+      - "3306:3306"
+    networks:
+      - development
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mariadb
+    networks:
+      - development
+
+volumes:
+  database:
+
+networks:
+  development:
