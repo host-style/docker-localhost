@@ -1,6 +1,6 @@
 services:
 
-  # Nginx Service
+  # Nginx
   nginx:
     container_name: nginx
     build:
@@ -22,7 +22,7 @@ services:
     networks:
       - development
 
-  # PHP Service
+  # PHP
   php:
     container_name: php
     build:
@@ -40,7 +40,7 @@ services:
     networks:
       - development
 
-  # MariaDB Service
+  # MariaDB
   mariadb:
     image: mariadb:lts
     container_name: mariadb
@@ -60,6 +60,22 @@ services:
     networks:
       - development
 
+  # Mailpit
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    networks:
+      - development
+
+# Adminer
   adminer:
     image: adminer:latest
     container_name: adminer
